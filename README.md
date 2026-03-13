@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./assets/logo.png" alt="Recall logo" width="180" />
+</p>
+
 # Recall — AI-Powered Spaced Repetition Flashcards
 
 > **Remember everything. Effortlessly.**
