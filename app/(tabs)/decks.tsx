@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Plus, Upload, BookOpen, ChevronRight } from 'lucide-react-native';
 import { useDeckStore, Deck } from '../../store/deckStore';
 import { pickAndParseDeck, ImportedDeck } from '../../lib/importDeck';
 import { Colors } from '../../constants/colors';
@@ -13,12 +14,10 @@ export default function DecksScreen() {
   const { decks, createDeck, deleteDeck, importDeck } = useDeckStore();
   const router = useRouter();
 
-  // Create deck modal
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
-  // Import preview modal
   const [importPreview, setImportPreview] = useState<ImportedDeck | null>(null);
   const [importing, setImporting] = useState(false);
 
@@ -61,20 +60,20 @@ export default function DecksScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Decks</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.importBtn} onPress={handleImport} disabled={importing}>
-            <Text style={styles.importBtnText}>{importing ? '…' : '↑ Import'}</Text>
+            <Upload size={15} color={Colors.gray700} />
+            <Text style={styles.importBtnText}>{importing ? 'Loading…' : 'Import'}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.fab} onPress={() => setShowCreate(true)}>
-            <Text style={styles.fabText}>+ New</Text>
+            <Plus size={16} color={Colors.white} />
+            <Text style={styles.fabText}>New</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* List */}
       <FlatList
         data={decks}
         keyExtractor={(d) => d.id}
@@ -87,6 +86,7 @@ export default function DecksScreen() {
             onPress={() => router.push({ pathname: '/deck/[id]', params: { id: item.id } })}
             onLongPress={() => handleDelete(item)}
           >
+            <BookOpen size={20} color={Colors.primary} />
             <View style={styles.cardLeft}>
               <Text style={styles.cardName}>{item.name}</Text>
               {item.description ? (
@@ -94,7 +94,7 @@ export default function DecksScreen() {
               ) : null}
               <Text style={styles.cardMeta}>{item.card_count} cards</Text>
             </View>
-            <Text style={styles.chevron}>›</Text>
+            <ChevronRight size={20} color={Colors.gray300} />
           </TouchableOpacity>
         )}
       />
@@ -127,7 +127,6 @@ export default function DecksScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalSheet, styles.previewSheet]}>
             <Text style={styles.modalTitle}>Import Deck</Text>
-
             {importPreview && (
               <>
                 <View style={styles.previewInfo}>
@@ -139,8 +138,7 @@ export default function DecksScreen() {
                     <Text style={styles.previewBadgeText}>{importPreview.cards.length} cards</Text>
                   </View>
                 </View>
-
-                <Text style={styles.previewSectionLabel}>Preview (first 3 cards)</Text>
+                <Text style={styles.previewSectionLabel}>PREVIEW (FIRST 3 CARDS)</Text>
                 <ScrollView style={styles.previewScroll} showsVerticalScrollIndicator={false}>
                   {importPreview.cards.slice(0, 3).map((c, i) => (
                     <View key={i} style={styles.previewCard}>
@@ -154,7 +152,6 @@ export default function DecksScreen() {
                 </ScrollView>
               </>
             )}
-
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setImportPreview(null)}>
                 <Text style={styles.cancelText}>Cancel</Text>
@@ -173,14 +170,16 @@ export default function DecksScreen() {
 function EmptyDecks({ onCreate, onImport }: { onCreate: () => void; onImport: () => void }) {
   return (
     <View style={styles.empty}>
-      <Text style={styles.emptyEmoji}>📚</Text>
+      <BookOpen size={56} color={Colors.gray300} />
       <Text style={styles.emptyTitle}>No decks yet</Text>
       <Text style={styles.emptySubtext}>Create a deck manually or import a JSON file</Text>
       <TouchableOpacity style={styles.emptyBtn} onPress={onCreate}>
+        <Plus size={18} color={Colors.white} />
         <Text style={styles.emptyBtnText}>Create Deck</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.emptyImportBtn} onPress={onImport}>
-        <Text style={styles.emptyImportText}>↑ Import from JSON</Text>
+        <Upload size={15} color={Colors.primary} />
+        <Text style={styles.emptyImportText}>Import from JSON</Text>
       </TouchableOpacity>
     </View>
   );
@@ -191,31 +190,28 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16 },
   title: { fontSize: 28, fontWeight: '800', color: Colors.black },
   headerActions: { flexDirection: 'row', gap: 8 },
-  importBtn: { backgroundColor: Colors.gray100, borderWidth: 1.5, borderColor: Colors.gray200, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
+  importBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.gray100, borderWidth: 1.5, borderColor: Colors.gray200, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
   importBtnText: { color: Colors.gray700, fontWeight: '600', fontSize: 14 },
-  fab: { backgroundColor: Colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 },
+  fab: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 },
   fabText: { color: Colors.white, fontWeight: '700', fontSize: 15 },
   listContent: { paddingHorizontal: 20, paddingBottom: 40, gap: 12 },
   emptyContainer: { flex: 1, justifyContent: 'center' },
   card: {
     backgroundColor: Colors.white, borderRadius: 16, padding: 16,
-    flexDirection: 'row', alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center', gap: 12,
     shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2,
   },
   cardLeft: { flex: 1 },
   cardName: { fontSize: 17, fontWeight: '700', color: Colors.black },
   cardDesc: { fontSize: 13, color: Colors.gray500, marginTop: 3 },
   cardMeta: { fontSize: 12, color: Colors.gray400, marginTop: 6 },
-  chevron: { fontSize: 24, color: Colors.gray300, marginLeft: 8 },
-  empty: { alignItems: 'center', gap: 10, paddingHorizontal: 40 },
-  emptyEmoji: { fontSize: 56, marginBottom: 8 },
+  empty: { alignItems: 'center', gap: 12, paddingHorizontal: 40 },
   emptyTitle: { fontSize: 22, fontWeight: '700', color: Colors.black },
   emptySubtext: { fontSize: 15, color: Colors.gray500, textAlign: 'center' },
-  emptyBtn: { marginTop: 8, backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14 },
+  emptyBtn: { marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14 },
   emptyBtnText: { color: Colors.white, fontWeight: '700', fontSize: 16 },
-  emptyImportBtn: { paddingHorizontal: 24, paddingVertical: 10 },
+  emptyImportBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 24, paddingVertical: 10 },
   emptyImportText: { color: Colors.primary, fontWeight: '600', fontSize: 15 },
-  // Modals
   modalOverlay: { flex: 1, backgroundColor: '#00000055', justifyContent: 'flex-end' },
   modalSheet: { backgroundColor: Colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 16 },
   previewSheet: { maxHeight: '80%' },
@@ -228,13 +224,12 @@ const styles = StyleSheet.create({
   createBtn: { flex: 1, padding: 14, borderRadius: 12, backgroundColor: Colors.primary, alignItems: 'center' },
   createBtnDisabled: { opacity: 0.4 },
   createText: { fontWeight: '700', color: Colors.white, fontSize: 16 },
-  // Preview
   previewInfo: { backgroundColor: Colors.primaryLight, borderRadius: 14, padding: 16, gap: 6 },
   previewName: { fontSize: 18, fontWeight: '800', color: Colors.black },
   previewDesc: { fontSize: 14, color: Colors.gray600 },
   previewBadge: { alignSelf: 'flex-start', backgroundColor: Colors.primary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginTop: 4 },
   previewBadgeText: { color: Colors.white, fontWeight: '700', fontSize: 13 },
-  previewSectionLabel: { fontSize: 13, fontWeight: '700', color: Colors.gray400, letterSpacing: 1 },
+  previewSectionLabel: { fontSize: 11, fontWeight: '700', color: Colors.gray400, letterSpacing: 1.5 },
   previewScroll: { maxHeight: 200 },
   previewCard: { backgroundColor: Colors.gray100, borderRadius: 12, padding: 12, gap: 6, marginBottom: 8 },
   previewQ: { fontSize: 14, fontWeight: '600', color: Colors.black },

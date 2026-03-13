@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { ChevronLeft, Plus, Brain, Heart, Trash2, Lightbulb, Pin, CreditCard } from 'lucide-react-native';
 import { useDeckStore, Card } from '../../store/deckStore';
 import { Colors } from '../../constants/colors';
 
@@ -23,7 +24,6 @@ export default function DeckScreen() {
   const [cards, setCards] = useState<Card[]>([]);
   const [showModal, setShowModal] = useState(false);
 
-  // Card form state
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [whyImportant, setWhyImportant] = useState('');
@@ -83,10 +83,12 @@ export default function DeckScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>‹ Back</Text>
+          <ChevronLeft size={24} color={Colors.primary} />
+          <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.addBtn} onPress={() => setShowModal(true)}>
-          <Text style={styles.addBtnText}>+ Card</Text>
+          <Plus size={15} color={Colors.white} />
+          <Text style={styles.addBtnText}>Card</Text>
         </TouchableOpacity>
       </View>
 
@@ -96,24 +98,23 @@ export default function DeckScreen() {
         <Text style={styles.deckMeta}>{deck.card_count} cards</Text>
       </View>
 
-      {/* Study button */}
       {cards.length > 0 && (
         <TouchableOpacity
           style={styles.studyBtn}
           onPress={() => router.push({ pathname: '/study/[id]', params: { id: deck.id } })}
         >
-          <Text style={styles.studyBtnText}>Study Now →</Text>
+          <Brain size={18} color={Colors.white} />
+          <Text style={styles.studyBtnText}>Study Now</Text>
         </TouchableOpacity>
       )}
 
-      {/* Cards list */}
       <FlatList
         data={cards}
         keyExtractor={(c) => c.id}
         contentContainerStyle={cards.length === 0 ? styles.emptyContainer : styles.listContent}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>🃏</Text>
+            <CreditCard size={48} color={Colors.gray300} />
             <Text style={styles.emptyText}>No cards yet</Text>
             <Text style={styles.emptySubtext}>Tap + Card to add your first card</Text>
           </View>
@@ -131,17 +132,24 @@ export default function DeckScreen() {
                   toggleFavorite(item.id);
                   setCards((prev) => prev.map((c) => c.id === item.id ? { ...c, favorite: !c.favorite } : c));
                 }}>
-                  <Text style={styles.heart}>{item.favorite ? '❤️' : '🤍'}</Text>
+                  <Heart
+                    size={20}
+                    color={item.favorite ? Colors.confidenceLow : Colors.gray300}
+                    fill={item.favorite ? Colors.confidenceLow : 'none'}
+                  />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => handleDeleteCard(item)}>
-                  <Text style={styles.deleteIcon}>🗑</Text>
+                  <Trash2 size={18} color={Colors.gray400} />
                 </TouchableOpacity>
               </View>
             </View>
             <Text style={styles.question}>{item.question}</Text>
             <Text style={styles.answer}>{item.answer}</Text>
             {item.why_important ? (
-              <Text style={styles.context}>💡 {item.why_important}</Text>
+              <View style={styles.contextRow}>
+                <Lightbulb size={13} color={Colors.gray400} />
+                <Text style={styles.context}>{item.why_important}</Text>
+              </View>
             ) : null}
           </View>
         )}
@@ -152,7 +160,6 @@ export default function DeckScreen() {
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <Text style={styles.modalTitle}>New Card</Text>
-
             <TextInput style={styles.input} placeholder="Question *" placeholderTextColor={Colors.gray400}
               value={question} onChangeText={setQuestion} autoFocus />
             <TextInput style={[styles.input, styles.inputMulti]} placeholder="Answer *" placeholderTextColor={Colors.gray400}
@@ -161,8 +168,6 @@ export default function DeckScreen() {
               value={whyImportant} onChangeText={setWhyImportant} />
             <TextInput style={styles.input} placeholder="Simple example (optional)" placeholderTextColor={Colors.gray400}
               value={simpleExample} onChangeText={setSimpleExample} />
-
-            {/* Difficulty picker */}
             <View style={styles.diffRow}>
               {DIFFICULTIES.map((d) => (
                 <TouchableOpacity
@@ -174,7 +179,6 @@ export default function DeckScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => { setShowModal(false); resetForm(); }}>
                 <Text style={styles.cancelText}>Cancel</Text>
@@ -198,43 +202,33 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   notFound: { textAlign: 'center', marginTop: 40, color: Colors.gray500, fontSize: 16 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 12 },
-  backBtn: { padding: 4 },
-  backText: { fontSize: 18, color: Colors.primary, fontWeight: '600' },
-  addBtn: { backgroundColor: Colors.primary, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 10 },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, padding: 4 },
+  backText: { fontSize: 16, color: Colors.primary, fontWeight: '600' },
+  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: Colors.primary, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 10 },
   addBtnText: { color: Colors.white, fontWeight: '700', fontSize: 14 },
   deckHeader: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
   deckName: { fontSize: 26, fontWeight: '800', color: Colors.black },
   deckDesc: { fontSize: 14, color: Colors.gray500, marginTop: 4 },
   deckMeta: { fontSize: 13, color: Colors.gray400, marginTop: 6 },
-  studyBtn: { marginHorizontal: 20, marginVertical: 12, backgroundColor: Colors.primary, padding: 14, borderRadius: 14, alignItems: 'center' },
+  studyBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginHorizontal: 20, marginVertical: 12, backgroundColor: Colors.primary, padding: 14, borderRadius: 14 },
   studyBtnText: { color: Colors.white, fontWeight: '800', fontSize: 16 },
   listContent: { paddingHorizontal: 20, paddingBottom: 40, gap: 12 },
   emptyContainer: { flex: 1, justifyContent: 'center' },
-  empty: { alignItems: 'center', gap: 8, padding: 40 },
-  emptyEmoji: { fontSize: 48 },
+  empty: { alignItems: 'center', gap: 10, padding: 40 },
   emptyText: { fontSize: 18, fontWeight: '600', color: Colors.gray700 },
   emptySubtext: { fontSize: 14, color: Colors.gray400, textAlign: 'center' },
   cardItem: {
-    backgroundColor: Colors.white,
-    borderRadius: 16,
-    padding: 16,
-    gap: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 8,
-    elevation: 2,
+    backgroundColor: Colors.white, borderRadius: 16, padding: 16, gap: 8,
+    shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2,
   },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   diffBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8 },
   diffText: { fontSize: 12, fontWeight: '700', textTransform: 'capitalize' },
-  cardActions: { flexDirection: 'row', gap: 12 },
-  heart: { fontSize: 18 },
-  deleteIcon: { fontSize: 16 },
+  cardActions: { flexDirection: 'row', gap: 14, alignItems: 'center' },
   question: { fontSize: 16, fontWeight: '700', color: Colors.black },
   answer: { fontSize: 15, color: Colors.gray700 },
-  context: { fontSize: 13, color: Colors.gray500, fontStyle: 'italic' },
-  // Modal
+  contextRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
+  context: { flex: 1, fontSize: 13, color: Colors.gray500, fontStyle: 'italic' },
   modalOverlay: { flex: 1, backgroundColor: '#00000055', justifyContent: 'flex-end' },
   modalSheet: { backgroundColor: Colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 12 },
   modalTitle: { fontSize: 22, fontWeight: '800', color: Colors.black },

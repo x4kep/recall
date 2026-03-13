@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { X, CheckCircle2, Lightbulb, Pin, PartyPopper } from 'lucide-react-native';
 import { useDeckStore, Card } from '../../store/deckStore';
 import { Colors } from '../../constants/colors';
 import { applyReview } from '../../lib/sm2';
@@ -34,10 +35,10 @@ export default function StudyScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backText}>‹ Back</Text>
+          <X size={24} color={Colors.primary} />
         </TouchableOpacity>
         <View style={styles.centered}>
-          <Text style={styles.emptyEmoji}>✅</Text>
+          <CheckCircle2 size={64} color={Colors.confidenceHigh} />
           <Text style={styles.emptyTitle}>All caught up!</Text>
           <Text style={styles.emptySub}>No cards due right now.</Text>
         </View>
@@ -50,15 +51,13 @@ export default function StudyScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.summary}>
-          <Text style={styles.summaryEmoji}>🎉</Text>
+          <PartyPopper size={64} color={Colors.primary} />
           <Text style={styles.summaryTitle}>Session Complete!</Text>
           <Text style={styles.summaryDeck}>{deck.name}</Text>
-
           <View style={styles.summaryStats}>
             <Stat label="Cards reviewed" value={results.length.toString()} />
             <Stat label="Avg confidence" value={avg.toFixed(1)} />
           </View>
-
           <TouchableOpacity style={styles.doneBtn} onPress={() => router.back()}>
             <Text style={styles.doneBtnText}>Done</Text>
           </TouchableOpacity>
@@ -69,13 +68,8 @@ export default function StudyScreen() {
 
   const card = queue[index];
 
-  function handleFlip() {
-    setPhase('answer');
-  }
-
   function handleRate(r: number) {
     setRating(r);
-    // Update SM-2 in DB
     const db = getDb();
     const updated = applyReview({
       interval: card.sm2_interval,
@@ -104,22 +98,20 @@ export default function StudyScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backText}>✕</Text>
+          <X size={22} color={Colors.gray500} />
         </TouchableOpacity>
         <Text style={styles.progress}>{index + 1} / {queue.length}</Text>
         <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: `${((index) / queue.length) * 100}%` as any }]} />
+          <View style={[styles.progressFill, { width: `${(index / queue.length) * 100}%` as any }]} />
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.cardArea}>
-        {/* Question */}
         <View style={styles.flashcard}>
           <Text style={styles.cardLabel}>QUESTION</Text>
           <Text style={styles.cardQuestion}>{card.question}</Text>
         </View>
 
-        {/* Answer (after flip) */}
         {phase === 'answer' && (
           <View style={[styles.flashcard, styles.answerCard]}>
             <Text style={styles.cardLabel}>ANSWER</Text>
@@ -127,28 +119,32 @@ export default function StudyScreen() {
 
             {card.why_important ? (
               <View style={styles.context}>
-                <Text style={styles.contextLabel}>💡 Why it matters</Text>
+                <View style={styles.contextHeader}>
+                  <Lightbulb size={13} color={Colors.gray400} />
+                  <Text style={styles.contextLabel}>Why it matters</Text>
+                </View>
                 <Text style={styles.contextText}>{card.why_important}</Text>
               </View>
             ) : null}
 
             {card.simple_example ? (
               <View style={styles.context}>
-                <Text style={styles.contextLabel}>📌 Example</Text>
+                <View style={styles.contextHeader}>
+                  <Pin size={13} color={Colors.gray400} />
+                  <Text style={styles.contextLabel}>Example</Text>
+                </View>
                 <Text style={styles.contextText}>{card.simple_example}</Text>
               </View>
             ) : null}
           </View>
         )}
 
-        {/* Flip button */}
         {phase === 'question' && (
-          <TouchableOpacity style={styles.flipBtn} onPress={handleFlip}>
+          <TouchableOpacity style={styles.flipBtn} onPress={() => setPhase('answer')}>
             <Text style={styles.flipBtnText}>Show Answer</Text>
           </TouchableOpacity>
         )}
 
-        {/* Rating buttons */}
         {phase === 'answer' && !rating && (
           <View style={styles.ratingSection}>
             <Text style={styles.ratingLabel}>How well did you know it?</Text>
@@ -185,9 +181,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   backBtn: { padding: 20 },
-  backText: { fontSize: 20, color: Colors.primary, fontWeight: '600' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-  emptyEmoji: { fontSize: 56 },
   emptyTitle: { fontSize: 24, fontWeight: '800', color: Colors.black },
   emptySub: { fontSize: 15, color: Colors.gray500 },
   header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 },
@@ -196,22 +190,16 @@ const styles = StyleSheet.create({
   progressFill: { height: 4, backgroundColor: Colors.primary, borderRadius: 4 },
   cardArea: { padding: 20, gap: 16, paddingBottom: 40 },
   flashcard: {
-    backgroundColor: Colors.white,
-    borderRadius: 20,
-    padding: 24,
-    gap: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 16,
-    elevation: 4,
+    backgroundColor: Colors.white, borderRadius: 20, padding: 24, gap: 12,
+    shadowColor: '#000', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 4 }, shadowRadius: 16, elevation: 4,
   },
   answerCard: { borderLeftWidth: 4, borderLeftColor: Colors.primary },
   cardLabel: { fontSize: 11, fontWeight: '800', color: Colors.gray400, letterSpacing: 1.5 },
   cardQuestion: { fontSize: 22, fontWeight: '700', color: Colors.black, lineHeight: 30 },
   cardAnswer: { fontSize: 18, color: Colors.gray800, lineHeight: 26 },
-  context: { gap: 4, paddingTop: 8, borderTopWidth: 1, borderTopColor: Colors.gray100 },
-  contextLabel: { fontSize: 12, fontWeight: '700', color: Colors.gray400 },
+  context: { gap: 6, paddingTop: 8, borderTopWidth: 1, borderTopColor: Colors.gray100 },
+  contextHeader: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  contextLabel: { fontSize: 11, fontWeight: '700', color: Colors.gray400, letterSpacing: 0.5 },
   contextText: { fontSize: 14, color: Colors.gray600, lineHeight: 20 },
   flipBtn: { backgroundColor: Colors.primary, padding: 18, borderRadius: 16, alignItems: 'center' },
   flipBtnText: { color: Colors.white, fontSize: 18, fontWeight: '800' },
@@ -220,9 +208,7 @@ const styles = StyleSheet.create({
   ratingGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
   ratingBtn: { width: 52, height: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   ratingBtnText: { color: Colors.white, fontSize: 18, fontWeight: '800' },
-  // Summary
   summary: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 12 },
-  summaryEmoji: { fontSize: 64 },
   summaryTitle: { fontSize: 28, fontWeight: '900', color: Colors.black },
   summaryDeck: { fontSize: 16, color: Colors.gray500 },
   summaryStats: { flexDirection: 'row', gap: 32, marginTop: 16 },

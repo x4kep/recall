@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { BookOpen, ArrowRight, Inbox } from 'lucide-react-native';
 import { useDeckStore } from '../../store/deckStore';
 import { Colors } from '../../constants/colors';
 
@@ -14,7 +15,7 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>Good morning 👋</Text>
+          <Text style={styles.greeting}>Good morning</Text>
           <Text style={styles.appName}>Recall</Text>
         </View>
 
@@ -25,7 +26,8 @@ export default function HomeScreen() {
             <Text style={styles.dueLabel}>cards due today</Text>
           </View>
           <View style={styles.studyButton}>
-            <Text style={styles.studyButtonText}>Study All →</Text>
+            <Text style={styles.studyButtonText}>Study All</Text>
+            <ArrowRight size={16} color={Colors.white} />
           </View>
         </TouchableOpacity>
 
@@ -40,7 +42,7 @@ export default function HomeScreen() {
 
           {decks.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>📭</Text>
+              <Inbox size={48} color={Colors.gray300} />
               <Text style={styles.emptyText}>No decks yet</Text>
               <Text style={styles.emptySubtext}>Go to Decks to create your first deck</Text>
             </View>
@@ -52,6 +54,7 @@ export default function HomeScreen() {
                 activeOpacity={0.7}
                 onPress={() => router.push({ pathname: '/deck/[id]', params: { id: deck.id } })}
               >
+                <BookOpen size={20} color={Colors.primary} style={styles.deckIcon} />
                 <View style={styles.deckInfo}>
                   <Text style={styles.deckName}>{deck.name}</Text>
                   <Text style={styles.deckMeta}>{deck.card_count} cards</Text>
@@ -102,6 +105,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   studyButtonText: { color: Colors.white, fontWeight: '700', fontSize: 14 },
   section: { gap: 12 },
@@ -113,14 +119,15 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 12,
     shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 8,
     elevation: 2,
   },
+  deckIcon: { flexShrink: 0 },
   deckInfo: { flex: 1 },
   deckName: { fontSize: 16, fontWeight: '600', color: Colors.black },
   deckMeta: { fontSize: 13, color: Colors.gray500, marginTop: 4 },
@@ -131,8 +138,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   badgeText: { fontSize: 14, fontWeight: '700' },
-  emptyState: { alignItems: 'center', paddingVertical: 40, gap: 8 },
-  emptyEmoji: { fontSize: 40 },
+  emptyState: { alignItems: 'center', paddingVertical: 40, gap: 12 },
   emptyText: { fontSize: 18, fontWeight: '600', color: Colors.gray700 },
   emptySubtext: { fontSize: 14, color: Colors.gray400, textAlign: 'center' },
 });
