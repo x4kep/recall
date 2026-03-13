@@ -171,9 +171,13 @@ export const useDeckStore = create<DeckStore>((set, get) => ({
   },
 
   getDueCount: () => {
-    const db = getDb();
-    const today = new Date().toISOString().split('T')[0];
-    const row = db.getFirstSync('SELECT COUNT(*) as count FROM cards WHERE next_review_date <= ?', [today]) as any;
-    return row?.count ?? 0;
+    try {
+      const db = getDb();
+      const today = new Date().toISOString().split('T')[0];
+      const row = db.getFirstSync('SELECT COUNT(*) as count FROM cards WHERE next_review_date <= ?', [today]) as any;
+      return row?.count ?? 0;
+    } catch {
+      return 0;
+    }
   },
 }));
