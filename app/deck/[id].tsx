@@ -5,9 +5,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, Plus, Brain, Heart, Trash2, Lightbulb, Pin, CreditCard } from 'lucide-react-native';
+import { ChevronLeft, Plus, Brain, Heart, Trash2, Lightbulb, CreditCard, X, AlertTriangle } from 'lucide-react-native';
 import { useDeckStore, Card } from '../../store/deckStore';
 import { Colors } from '../../constants/colors';
+import Toast, { ToastType } from '../../components/Toast';
 
 const DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
 const DIFFICULTY_COLORS: Record<string, string> = {
@@ -19,11 +20,18 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 export default function DeckScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { decks, getCards, createCard, deleteCard, toggleFavorite } = useDeckStore();
+  const { decks, getCards, createCard, deleteCard, toggleFavorite, deleteDeck } = useDeckStore();
   const deck = decks.find((d) => d.id === id);
   const [cards, setCards] = useState<Card[]>([]);
-  const [showModal, setShowModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  // Toast state
+  const [toast, setToast] = useState<{ message: string; type: ToastType; visible: boolean }>({
+    message: '', type: 'success', visible: false,
+  });
+
+  // Card form state
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [whyImportant, setWhyImportant] = useState('');
@@ -33,6 +41,10 @@ export default function DeckScreen() {
   useEffect(() => {
     if (id) setCards(getCards(id));
   }, [id, deck?.card_count]);
+
+  function showToast(message: string, type: ToastType) {
+    setToast({ message, type, visible: true });
+  }
 
   if (!deck) {
     return (
@@ -54,7 +66,7 @@ export default function DeckScreen() {
     });
     setCards(getCards(deck!.id));
     resetForm();
-    setShowModal(false);
+    setShowAddModal(false);
   }
 
   function resetForm() {
@@ -78,6 +90,18 @@ export default function DeckScreen() {
     ]);
   }
 
+  function handleDeleteDeck() {
+    try {
+      deleteDeck(deck!.id);
+      setShowDeleteModal(false);
+      showToast(`"${deck!.name}" deleted`, 'success');
+      setTimeout(() => router.back(), 1200);
+    } catch {
+      setShowDeleteModal(false);
+      showToast('Failed to delete deck', 'error');
+    }
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -86,10 +110,15 @@ export default function DeckScreen() {
           <ChevronLeft size={24} color={Colors.primary} />
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.addBtn} onPress={() => setShowModal(true)}>
-          <Plus size={15} color={Colors.white} />
-          <Text style={styles.addBtnText}>Card</Text>
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.deleteBtn} onPress={() => setShowDeleteModal(true)}>
+            <Trash2 size={18} color={Colors.confidenceLow} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.addBtn} onPress={() => setShowAddModal(true)}>
+            <Plus size={15} color={Colors.white} />
+            <Text style={styles.addBtnText}>Card</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.deckHeader}>
@@ -156,7 +185,7 @@ export default function DeckScreen() {
       />
 
       {/* Add Card Modal */}
-      <Modal visible={showModal} animationType="slide" transparent>
+      <Modal visible={showAddModal} animationType="slide" transparent>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <Text style={styles.modalTitle}>New Card</Text>
@@ -180,7 +209,7 @@ export default function DeckScreen() {
               ))}
             </View>
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => { setShowModal(false); resetForm(); }}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => { setShowAddModal(false); resetForm(); }}>
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -194,6 +223,41 @@ export default function DeckScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Delete Deck Confirmation Modal */}
+      <Modal visible={showDeleteModal} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.confirmSheet}>
+            <View style={styles.confirmIcon}>
+              <AlertTriangle size={32} color={Colors.confidenceLow} />
+            </View>
+            <Text style={styles.confirmTitle}>Delete Deck?</Text>
+            <Text style={styles.confirmMsg}>
+              <Text style={{ fontWeight: '700' }}>{deck.name}</Text> and all{' '}
+              <Text style={{ fontWeight: '700' }}>{deck.card_count} cards</Text> will be permanently deleted.
+              This cannot be undone.
+            </Text>
+            <View style={styles.confirmActions}>
+              <TouchableOpacity style={styles.closeBtn} onPress={() => setShowDeleteModal(false)}>
+                <X size={16} color={Colors.gray600} />
+                <Text style={styles.closeBtnText}>Close</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.confirmDeleteBtn} onPress={handleDeleteDeck}>
+                <Trash2 size={16} color={Colors.white} />
+                <Text style={styles.confirmDeleteText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Toast */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        visible={toast.visible}
+        onHide={() => setToast((t) => ({ ...t, visible: false }))}
+      />
     </SafeAreaView>
   );
 }
@@ -204,6 +268,8 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 12 },
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 2, padding: 4 },
   backText: { fontSize: 16, color: Colors.primary, fontWeight: '600' },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  deleteBtn: { padding: 8, borderRadius: 10, backgroundColor: Colors.confidenceLow + '15', borderWidth: 1.5, borderColor: Colors.confidenceLow + '30' },
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: Colors.primary, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 10 },
   addBtnText: { color: Colors.white, fontWeight: '700', fontSize: 14 },
   deckHeader: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
@@ -229,6 +295,7 @@ const styles = StyleSheet.create({
   answer: { fontSize: 15, color: Colors.gray700 },
   contextRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
   context: { flex: 1, fontSize: 13, color: Colors.gray500, fontStyle: 'italic' },
+  // Add card modal
   modalOverlay: { flex: 1, backgroundColor: '#00000055', justifyContent: 'flex-end' },
   modalSheet: { backgroundColor: Colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 12 },
   modalTitle: { fontSize: 22, fontWeight: '800', color: Colors.black },
@@ -243,4 +310,37 @@ const styles = StyleSheet.create({
   createBtn: { flex: 1, padding: 14, borderRadius: 12, backgroundColor: Colors.primary, alignItems: 'center' },
   createBtnDisabled: { opacity: 0.4 },
   createText: { fontWeight: '700', color: Colors.white, fontSize: 16 },
+  // Delete confirmation
+  confirmSheet: {
+    backgroundColor: Colors.white,
+    borderRadius: 24,
+    padding: 28,
+    marginHorizontal: 24,
+    alignItems: 'center',
+    gap: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  confirmIcon: {
+    width: 64, height: 64, borderRadius: 32,
+    backgroundColor: Colors.confidenceLow + '15',
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 4,
+  },
+  confirmTitle: { fontSize: 22, fontWeight: '900', color: Colors.black },
+  confirmMsg: { fontSize: 15, color: Colors.gray600, textAlign: 'center', lineHeight: 22 },
+  confirmActions: { flexDirection: 'row', gap: 12, marginTop: 8, width: '100%' },
+  closeBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 6, padding: 14, borderRadius: 12, backgroundColor: Colors.gray100,
+  },
+  closeBtnText: { fontWeight: '600', color: Colors.gray600, fontSize: 15 },
+  confirmDeleteBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 6, padding: 14, borderRadius: 12, backgroundColor: Colors.confidenceLow,
+  },
+  confirmDeleteText: { fontWeight: '700', color: Colors.white, fontSize: 15 },
 });
