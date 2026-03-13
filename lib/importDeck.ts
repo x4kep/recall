@@ -46,7 +46,7 @@ export async function pickAndParseDeck(): Promise<ImportResult> {
 
   let raw: string;
   try {
-    raw = await FileSystem.readAsStringAsync(file.uri, { encoding: FileSystem.EncodingType.UTF8 });
+    raw = await FileSystem.readAsStringAsync(file.uri, { encoding: 'utf8' as any });
   } catch (e: any) {
     return { ok: false, error: `Could not read the file: ${e?.message ?? 'unknown error'}` };
   }
