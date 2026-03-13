@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Plus, Upload, BookOpen, ChevronRight } from 'lucide-react-native';
+import { Plus, Upload, BookOpen, ChevronRight, X } from 'lucide-react-native';
 import { useDeckStore, Deck } from '../../store/deckStore';
 import { pickAndParseDeck, ImportedDeck } from '../../lib/importDeck';
 import { Colors } from '../../constants/colors';
@@ -126,7 +126,12 @@ export default function DecksScreen() {
       <Modal visible={!!importPreview} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalSheet, styles.previewSheet]}>
-            <Text style={styles.modalTitle}>Import Deck</Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Import Deck</Text>
+              <TouchableOpacity onPress={() => setImportPreview(null)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <X size={22} color={Colors.gray500} />
+              </TouchableOpacity>
+            </View>
             {importPreview && (
               <>
                 <View style={styles.previewInfo}>
@@ -215,6 +220,7 @@ const styles = StyleSheet.create({
   modalOverlay: { flex: 1, backgroundColor: '#00000055', justifyContent: 'flex-end' },
   modalSheet: { backgroundColor: Colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 16 },
   previewSheet: { maxHeight: '80%' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   modalTitle: { fontSize: 22, fontWeight: '800', color: Colors.black },
   input: { borderWidth: 1.5, borderColor: Colors.gray200, borderRadius: 12, padding: 14, fontSize: 16, color: Colors.black, backgroundColor: Colors.gray100 },
   inputMulti: { minHeight: 80, textAlignVertical: 'top' },
