@@ -107,18 +107,41 @@ Each Card is a **rich learning unit**, not just a question/answer pair:
 - Import a JSON file to create a new deck or merge into an existing deck.
 - Duplicate an existing deck.
 
-### 5.1b PDF Export — Printable Flashcards *(Priority: Medium)*
+### 5.1b PDF Export — Printable Flashcards *(Priority: Phase 3)*
 
+> **Goal:** Let users print physical flashcards they can cut out, study offline, and carry anywhere. Each card also includes an AI-generated memory image so visual learners can anchor the fact to a picture.
+
+#### Layout & Print
 - Accessible from deck options menu: "Export as PDF."
 - **Layout**: 2-column grid of cards per page; A4 or US Letter size selectable before export.
-- **Front pages**: question + deck name + difficulty label per card box.
-- **Back pages**: answer + optional why_important + simple_example per card box, printed in the same card order as fronts.
+- **Front pages** (odd pages): question + AI-generated memory image + deck name + difficulty label per card box.
+- **Back pages** (even pages): answer + why_important + simple_example per card box, printed in the same card order as fronts — ready for double-sided printing.
 - **Cut guides**: each card box has a solid inner border and a dashed outer cut line with a ✂ scissors icon at one corner.
 - **Filter options**: all cards / favorited only / by difficulty / by confidence range.
 - **Context toggle**: user can include or exclude why_important and simple_example on the back side.
-- Generated fully on-device via `expo-print` or `react-native-html-to-pdf` (no server required; works offline).
+- Generated on-device via `expo-print` or `react-native-html-to-pdf` (no server required; works offline once images cached).
 - Shared via native share sheet — supports AirPrint (iOS), Android print service, and save-to-Files.
 - Filename: `{deck-name}-flashcards-{date}.pdf`.
+
+#### AI Memory Images *(Phase 3 — Premium)*
+
+Each card can have an AI-generated illustration that helps the user visually anchor the concept. Research shows visual associations significantly improve recall (dual-coding theory, Paivio 1971).
+
+**How it works:**
+1. When a card is created or imported, a background job requests an image from an image generation API (e.g. **DALL·E 3** or **Stable Diffusion** via backend proxy).
+2. The prompt is auto-constructed from the card's `question`, `simple_example`, and `use_cases` — e.g.: *"A clean, minimal illustration representing: [question]. Style: flat design, bright colors, educational poster, no text."*
+3. The image is cached locally on-device (`expo-file-system`) so it works offline after first generation.
+4. **In-app**: the image appears as a subtle background or thumbnail on the flashcard front during study sessions.
+5. **In PDF**: the image is embedded in the front-side card box above the question text.
+
+**Generation rules:**
+- Images are generated once per card and regenerated only if the question changes.
+- Users can manually re-generate or delete an image from the card edit view.
+- Image generation is a **Premium** feature. Free users see a placeholder pattern instead.
+- All prompts are sanitized — no personal data or card answer is sent to the image API.
+- Images are stored at 512×512px, converted to base64 for PDF embedding.
+
+**Fallback**: if image generation fails or user is offline, a color-coded gradient tile based on the card's difficulty is used instead (easy = green, medium = amber, hard = red).
 
 ### 5.2 AI Deck Generation *(Priority: High)*
 
@@ -416,6 +439,15 @@ That evening she wants to study Rust error handling — a topic not yet in her d
 - Quiz result sharing + export
 - Performance optimization (WatermelonDB evaluation)
 - App Store + Google Play public launch
+
+### Phase 4 — Physical & Visual Learning (Weeks 29–36)
+
+- **AI Memory Images** — auto-generate one illustration per card using image AI (DALL·E 3 or Stable Diffusion via backend proxy); cached locally; shown during study and embedded in PDF exports
+- **PDF Export — Printable Flashcards** — 2-column printable layout with cut guides; front = question + AI image; back = answer + context; A4 / US Letter; filter by difficulty or favorites; share via AirPrint / Android print / save-to-Files
+- Image regeneration and deletion from card edit view
+- Gradient fallback tiles for free users and offline scenarios
+- Batch image generation when importing a JSON deck (background job with progress indicator)
+- Option to disable images per deck (for text-heavy decks like code snippets)
 
 ---
 
