@@ -1,16 +1,20 @@
 import { Tabs } from 'expo-router';
 import { Home, BookOpen } from 'lucide-react-native';
-import { Colors } from '../../constants/colors';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function TabLayout() {
+  const { t } = useTranslation();
+  const C = useTheme();
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.gray400,
+        tabBarActiveTintColor: C.primary,
+        tabBarInactiveTintColor: C.textMuted,
         tabBarStyle: {
-          backgroundColor: Colors.white,
-          borderTopColor: Colors.gray200,
+          backgroundColor: C.tabBarBg,
+          borderTopColor: C.tabBarBorder,
           borderTopWidth: 1,
         },
         headerShown: false,
@@ -19,14 +23,14 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: t('tabs.home'),
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="decks"
         options={{
-          title: 'Decks',
+          title: t('tabs.decks'),
           tabBarIcon: ({ color, size }) => <BookOpen size={size} color={color} />,
         }}
       />

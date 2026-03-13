@@ -1,13 +1,17 @@
+import '../lib/i18n';
 import { useEffect, useState } from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import { View, Image, StyleSheet, useColorScheme } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { initDb } from '../lib/db';
 import { useDeckStore } from '../store/deckStore';
+import { ThemeProvider, lightColors, darkColors } from '../context/ThemeContext';
 
 export default function RootLayout() {
   const loadDecks = useDeckStore((s) => s.loadDecks);
   const [ready, setReady] = useState(false);
+  const scheme = useColorScheme();
+  const C = scheme === 'dark' ? darkColors : lightColors;
 
   useEffect(() => {
     initDb()
@@ -17,7 +21,7 @@ export default function RootLayout() {
 
   if (!ready) {
     return (
-      <View style={styles.splash}>
+      <View style={[styles.splash, { backgroundColor: C.primary }]}>
         <StatusBar style="light" />
         <View style={styles.logoRing}>
           <Image
@@ -31,17 +35,16 @@ export default function RootLayout() {
   }
 
   return (
-    <>
-      <StatusBar style="auto" />
+    <ThemeProvider>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }} />
-    </>
+    </ThemeProvider>
   );
 }
 
 const styles = StyleSheet.create({
   splash: {
     flex: 1,
-    backgroundColor: '#4F6EF7',
     justifyContent: 'center',
     alignItems: 'center',
   },

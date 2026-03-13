@@ -1,0 +1,79 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "close": "Close",
+    "back": "Back",
+    "cards_count": "{{count}} cards"
+  },
+  "home": {
+    "greeting": "Good morning",
+    "app_name": "Recall",
+    "cards_due": "cards due today",
+    "study_all": "Study All",
+    "your_decks": "Your Decks",
+    "see_all": "See all",
+    "no_decks": "No decks yet",
+    "no_decks_sub": "Go to Decks to create your first deck"
+  },
+  "decks": {
+    "title": "Decks",
+    "import": "Import",
+    "loading": "Loading…",
+    "new": "New",
+    "new_deck": "New Deck",
+    "deck_name_placeholder": "Deck name *",
+    "description_placeholder": "Description (optional)",
+    "create": "Create",
+    "import_deck": "Import Deck",
+    "preview_label": "PREVIEW (FIRST 3 CARDS)",
+    "more_cards": "+ {{count}} more cards",
+    "no_decks": "No decks yet",
+    "no_decks_sub": "Create a deck manually or import a JSON file",
+    "create_deck": "Create Deck",
+    "import_json": "Import from JSON",
+    "delete_deck_title": "Delete Deck",
+    "delete_deck_msg": "Delete \"{{name}}\" and all its cards?",
+    "preview_q": "Q:",
+    "preview_a": "A:"
+  },
+  "deck": {
+    "not_found": "Deck not found",
+    "study_now": "Study Now",
+    "no_cards": "No cards yet",
+    "no_cards_sub": "Tap + Card to add your first card",
+    "add_card_btn": "Card",
+    "new_card": "New Card",
+    "question_placeholder": "Question *",
+    "answer_placeholder": "Answer *",
+    "why_placeholder": "Why it matters (optional)",
+    "example_placeholder": "Simple example (optional)",
+    "add_card": "Add Card",
+    "delete_card_title": "Delete Card",
+    "delete_card_msg": "Delete this card?",
+    "delete_deck_title": "Delete Deck?",
+    "delete_deck_msg": "{{name}} and all {{count}} cards will be permanently deleted. This cannot be undone.",
+    "deleted_success": "\"{{name}}\" deleted",
+    "deleted_error": "Failed to delete deck"
+  },
+  "study": {
+    "question_label": "QUESTION",
+    "answer_label": "ANSWER",
+    "why_matters": "WHY IT MATTERS",
+    "use_cases": "REAL-WORLD USE CASES",
+    "code_example": "CODE EXAMPLE",
+    "example": "EXAMPLE",
+    "show_answer": "Show Answer",
+    "rating_label": "How well did you know it?",
+    "all_caught_up": "All caught up!",
+    "no_due": "No cards due right now.",
+    "session_complete": "Session Complete!",
+    "cards_reviewed": "Cards reviewed",
+    "avg_confidence": "Avg confidence",
+    "done": "Done"
+  },
+  "tabs": {
+    "home": "Home",
+    "decks": "Decks"
+  }
+}

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Text, StyleSheet, View } from 'react-native';
 import { CheckCircle2, XCircle } from 'lucide-react-native';
-import { Colors } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 
 export type ToastType = 'success' | 'error';
 
@@ -13,6 +13,7 @@ interface Props {
 }
 
 export default function Toast({ message, type, visible, onHide }: Props) {
+  const C = useTheme();
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(20)).current;
 
@@ -37,14 +38,15 @@ export default function Toast({ message, type, visible, onHide }: Props) {
   if (!visible) return null;
 
   const isSuccess = type === 'success';
+  const bgColor = isSuccess ? C.confidenceHigh : C.confidenceLow;
 
   return (
-    <Animated.View style={[styles.toast, isSuccess ? styles.success : styles.error, { opacity, transform: [{ translateY }] }]}>
+    <Animated.View style={[styles.toast, { backgroundColor: bgColor, opacity, transform: [{ translateY }] }]}>
       {isSuccess
-        ? <CheckCircle2 size={18} color={Colors.white} />
-        : <XCircle size={18} color={Colors.white} />
+        ? <CheckCircle2 size={18} color={C.white} />
+        : <XCircle size={18} color={C.white} />
       }
-      <Text style={styles.message}>{message}</Text>
+      <Text style={[styles.message, { color: C.white }]}>{message}</Text>
     </Animated.View>
   );
 }
@@ -68,7 +70,5 @@ const styles = StyleSheet.create({
     elevation: 8,
     zIndex: 999,
   },
-  success: { backgroundColor: '#16a34a' },
-  error: { backgroundColor: Colors.confidenceLow },
-  message: { flex: 1, color: Colors.white, fontSize: 14, fontWeight: '600' },
+  message: { flex: 1, fontSize: 14, fontWeight: '600' },
 });
