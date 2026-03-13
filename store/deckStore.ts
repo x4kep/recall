@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { getDb } from '../lib/db';
 import { defaultSM2State } from '../lib/sm2';
+import type { ImportedDeck } from '../lib/importDeck';
 
 export interface Deck {
   id: string;
@@ -43,6 +44,7 @@ interface DeckStore {
   deleteCard: (id: string, deckId: string) => void;
   toggleFavorite: (id: string) => void;
   getDueCount: () => number;
+  importDeck: (data: ImportedDeck) => Deck;
 }
 
 function uuid(): string {
@@ -168,6 +170,38 @@ export const useDeckStore = create<DeckStore>((set, get) => ({
   toggleFavorite: (id) => {
     const db = getDb();
     db.runSync('UPDATE cards SET favorite = NOT favorite, updated_at = ? WHERE id = ?', [now(), id]);
+  },
+
+  importDeck: (data: ImportedDeck) => {
+    const db = getDb();
+    const deck: Deck = {
+      id: uuid(),
+      name: data.name,
+      description: data.description ?? '',
+      tags: [],
+      card_count: data.cards.length,
+      avg_confidence: 0,
+      created_at: now(),
+      updated_at: now(),
+    };
+    db.runSync(
+      'INSERT INTO decks (id, name, description, tags, card_count, avg_confidence, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [deck.id, deck.name, deck.description, '[]', deck.card_count, 0, deck.created_at, deck.updated_at]
+    );
+    const sm2 = defaultSM2State();
+    for (const c of data.cards) {
+      db.runSync(
+        `INSERT INTO cards (id, deck_id, question, answer, why_important, simple_example, use_cases,
+          difficulty, confidence, favorite, tags, sm2_interval, sm2_ease_factor, sm2_repetitions,
+          next_review_date, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [uuid(), deck.id, c.question, c.answer, c.why_important ?? '', c.simple_example ?? '',
+          JSON.stringify(c.use_cases ?? []), c.difficulty ?? 'medium', 0, 0, '[]',
+          sm2.interval, sm2.easeFactor, sm2.repetitions, sm2.nextReviewDate, now(), now()]
+      );
+    }
+    set((s) => ({ decks: [deck, ...s.decks] }));
+    return deck;
   },
 
   getDueCount: () => {

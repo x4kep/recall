@@ -1,26 +1,33 @@
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  TextInput, Modal, Alert, KeyboardAvoidingView, Platform,
+  TextInput, Modal, Alert, KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useDeckStore, Deck } from '../../store/deckStore';
+import { pickAndParseDeck, ImportedDeck } from '../../lib/importDeck';
 import { Colors } from '../../constants/colors';
 
 export default function DecksScreen() {
-  const { decks, createDeck, deleteDeck } = useDeckStore();
+  const { decks, createDeck, deleteDeck, importDeck } = useDeckStore();
   const router = useRouter();
-  const [showModal, setShowModal] = useState(false);
+
+  // Create deck modal
+  const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+
+  // Import preview modal
+  const [importPreview, setImportPreview] = useState<ImportedDeck | null>(null);
+  const [importing, setImporting] = useState(false);
 
   function handleCreate() {
     if (!name.trim()) return;
     createDeck(name.trim(), description.trim());
     setName('');
     setDescription('');
-    setShowModal(false);
+    setShowCreate(false);
   }
 
   function handleDelete(deck: Deck) {
@@ -34,14 +41,37 @@ export default function DecksScreen() {
     );
   }
 
+  async function handleImport() {
+    setImporting(true);
+    const result = await pickAndParseDeck();
+    setImporting(false);
+    if (!result.ok) {
+      if (result.error !== 'cancelled') Alert.alert('Import failed', result.error);
+      return;
+    }
+    setImportPreview(result.deck);
+  }
+
+  function confirmImport() {
+    if (!importPreview) return;
+    const deck = importDeck(importPreview);
+    setImportPreview(null);
+    router.push({ pathname: '/deck/[id]', params: { id: deck.id } });
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Decks</Text>
-        <TouchableOpacity style={styles.fab} onPress={() => setShowModal(true)}>
-          <Text style={styles.fabText}>+ New</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.importBtn} onPress={handleImport} disabled={importing}>
+            <Text style={styles.importBtnText}>{importing ? '…' : '↑ Import'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.fab} onPress={() => setShowCreate(true)}>
+            <Text style={styles.fabText}>+ New</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* List */}
@@ -49,7 +79,7 @@ export default function DecksScreen() {
         data={decks}
         keyExtractor={(d) => d.id}
         contentContainerStyle={decks.length === 0 ? styles.emptyContainer : styles.listContent}
-        ListEmptyComponent={<EmptyDecks onCreate={() => setShowModal(true)} />}
+        ListEmptyComponent={<EmptyDecks onCreate={() => setShowCreate(true)} onImport={handleImport} />}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
@@ -62,7 +92,7 @@ export default function DecksScreen() {
               {item.description ? (
                 <Text style={styles.cardDesc} numberOfLines={1}>{item.description}</Text>
               ) : null}
-              <Text style={styles.cardMeta}>{item.card_count} cards · Confidence {item.avg_confidence.toFixed(1)}</Text>
+              <Text style={styles.cardMeta}>{item.card_count} cards</Text>
             </View>
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
@@ -70,52 +100,87 @@ export default function DecksScreen() {
       />
 
       {/* Create Deck Modal */}
-      <Modal visible={showModal} animationType="slide" transparent>
+      <Modal visible={showCreate} animationType="slide" transparent>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <Text style={styles.modalTitle}>New Deck</Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Deck name *"
-              placeholderTextColor={Colors.gray400}
-              value={name}
-              onChangeText={setName}
-              autoFocus
-            />
-            <TextInput
-              style={[styles.input, styles.inputMulti]}
-              placeholder="Description (optional)"
-              placeholderTextColor={Colors.gray400}
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={3}
-            />
-
+            <TextInput style={styles.input} placeholder="Deck name *" placeholderTextColor={Colors.gray400}
+              value={name} onChangeText={setName} autoFocus />
+            <TextInput style={[styles.input, styles.inputMulti]} placeholder="Description (optional)"
+              placeholderTextColor={Colors.gray400} value={description} onChangeText={setDescription}
+              multiline numberOfLines={3} />
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => { setShowModal(false); setName(''); setDescription(''); }}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => { setShowCreate(false); setName(''); setDescription(''); }}>
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.createBtn, !name.trim() && styles.createBtnDisabled]} onPress={handleCreate} disabled={!name.trim()}>
+              <TouchableOpacity style={[styles.createBtn, !name.trim() && styles.createBtnDisabled]}
+                onPress={handleCreate} disabled={!name.trim()}>
                 <Text style={styles.createText}>Create</Text>
               </TouchableOpacity>
             </View>
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Import Preview Modal */}
+      <Modal visible={!!importPreview} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalSheet, styles.previewSheet]}>
+            <Text style={styles.modalTitle}>Import Deck</Text>
+
+            {importPreview && (
+              <>
+                <View style={styles.previewInfo}>
+                  <Text style={styles.previewName}>{importPreview.name}</Text>
+                  {importPreview.description ? (
+                    <Text style={styles.previewDesc}>{importPreview.description}</Text>
+                  ) : null}
+                  <View style={styles.previewBadge}>
+                    <Text style={styles.previewBadgeText}>{importPreview.cards.length} cards</Text>
+                  </View>
+                </View>
+
+                <Text style={styles.previewSectionLabel}>Preview (first 3 cards)</Text>
+                <ScrollView style={styles.previewScroll} showsVerticalScrollIndicator={false}>
+                  {importPreview.cards.slice(0, 3).map((c, i) => (
+                    <View key={i} style={styles.previewCard}>
+                      <Text style={styles.previewQ} numberOfLines={2}>Q: {c.question}</Text>
+                      <Text style={styles.previewA} numberOfLines={2}>A: {c.answer}</Text>
+                    </View>
+                  ))}
+                  {importPreview.cards.length > 3 && (
+                    <Text style={styles.previewMore}>+ {importPreview.cards.length - 3} more cards</Text>
+                  )}
+                </ScrollView>
+              </>
+            )}
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setImportPreview(null)}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.createBtn} onPress={confirmImport}>
+                <Text style={styles.createText}>Import</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
-function EmptyDecks({ onCreate }: { onCreate: () => void }) {
+function EmptyDecks({ onCreate, onImport }: { onCreate: () => void; onImport: () => void }) {
   return (
     <View style={styles.empty}>
       <Text style={styles.emptyEmoji}>📚</Text>
       <Text style={styles.emptyTitle}>No decks yet</Text>
-      <Text style={styles.emptySubtext}>Create your first deck to start learning</Text>
+      <Text style={styles.emptySubtext}>Create a deck manually or import a JSON file</Text>
       <TouchableOpacity style={styles.emptyBtn} onPress={onCreate}>
         <Text style={styles.emptyBtnText}>Create Deck</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.emptyImportBtn} onPress={onImport}>
+        <Text style={styles.emptyImportText}>↑ Import from JSON</Text>
       </TouchableOpacity>
     </View>
   );
@@ -125,21 +190,17 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16 },
   title: { fontSize: 28, fontWeight: '800', color: Colors.black },
+  headerActions: { flexDirection: 'row', gap: 8 },
+  importBtn: { backgroundColor: Colors.gray100, borderWidth: 1.5, borderColor: Colors.gray200, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
+  importBtnText: { color: Colors.gray700, fontWeight: '600', fontSize: 14 },
   fab: { backgroundColor: Colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 },
   fabText: { color: Colors.white, fontWeight: '700', fontSize: 15 },
   listContent: { paddingHorizontal: 20, paddingBottom: 40, gap: 12 },
   emptyContainer: { flex: 1, justifyContent: 'center' },
   card: {
-    backgroundColor: Colors.white,
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 8,
-    elevation: 2,
+    backgroundColor: Colors.white, borderRadius: 16, padding: 16,
+    flexDirection: 'row', alignItems: 'center',
+    shadowColor: '#000', shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2,
   },
   cardLeft: { flex: 1 },
   cardName: { fontSize: 17, fontWeight: '700', color: Colors.black },
@@ -150,27 +211,16 @@ const styles = StyleSheet.create({
   emptyEmoji: { fontSize: 56, marginBottom: 8 },
   emptyTitle: { fontSize: 22, fontWeight: '700', color: Colors.black },
   emptySubtext: { fontSize: 15, color: Colors.gray500, textAlign: 'center' },
-  emptyBtn: { marginTop: 16, backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14 },
+  emptyBtn: { marginTop: 8, backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14 },
   emptyBtnText: { color: Colors.white, fontWeight: '700', fontSize: 16 },
-  // Modal
+  emptyImportBtn: { paddingHorizontal: 24, paddingVertical: 10 },
+  emptyImportText: { color: Colors.primary, fontWeight: '600', fontSize: 15 },
+  // Modals
   modalOverlay: { flex: 1, backgroundColor: '#00000055', justifyContent: 'flex-end' },
-  modalSheet: {
-    backgroundColor: Colors.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    gap: 16,
-  },
+  modalSheet: { backgroundColor: Colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 16 },
+  previewSheet: { maxHeight: '80%' },
   modalTitle: { fontSize: 22, fontWeight: '800', color: Colors.black },
-  input: {
-    borderWidth: 1.5,
-    borderColor: Colors.gray200,
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 16,
-    color: Colors.black,
-    backgroundColor: Colors.gray100,
-  },
+  input: { borderWidth: 1.5, borderColor: Colors.gray200, borderRadius: 12, padding: 14, fontSize: 16, color: Colors.black, backgroundColor: Colors.gray100 },
   inputMulti: { minHeight: 80, textAlignVertical: 'top' },
   modalActions: { flexDirection: 'row', gap: 12, marginTop: 4 },
   cancelBtn: { flex: 1, padding: 14, borderRadius: 12, backgroundColor: Colors.gray100, alignItems: 'center' },
@@ -178,4 +228,16 @@ const styles = StyleSheet.create({
   createBtn: { flex: 1, padding: 14, borderRadius: 12, backgroundColor: Colors.primary, alignItems: 'center' },
   createBtnDisabled: { opacity: 0.4 },
   createText: { fontWeight: '700', color: Colors.white, fontSize: 16 },
+  // Preview
+  previewInfo: { backgroundColor: Colors.primaryLight, borderRadius: 14, padding: 16, gap: 6 },
+  previewName: { fontSize: 18, fontWeight: '800', color: Colors.black },
+  previewDesc: { fontSize: 14, color: Colors.gray600 },
+  previewBadge: { alignSelf: 'flex-start', backgroundColor: Colors.primary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginTop: 4 },
+  previewBadgeText: { color: Colors.white, fontWeight: '700', fontSize: 13 },
+  previewSectionLabel: { fontSize: 13, fontWeight: '700', color: Colors.gray400, letterSpacing: 1 },
+  previewScroll: { maxHeight: 200 },
+  previewCard: { backgroundColor: Colors.gray100, borderRadius: 12, padding: 12, gap: 6, marginBottom: 8 },
+  previewQ: { fontSize: 14, fontWeight: '600', color: Colors.black },
+  previewA: { fontSize: 13, color: Colors.gray600 },
+  previewMore: { fontSize: 13, color: Colors.gray400, textAlign: 'center', paddingVertical: 8 },
 });
