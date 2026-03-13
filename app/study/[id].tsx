@@ -2,13 +2,27 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { X, CheckCircle2, Lightbulb, Pin, PartyPopper } from 'lucide-react-native';
+import { X, CheckCircle2, Lightbulb, ChevronDown, ChevronUp, Code, PartyPopper, Zap } from 'lucide-react-native';
 import { useDeckStore, Card } from '../../store/deckStore';
 import { Colors } from '../../constants/colors';
 import { applyReview } from '../../lib/sm2';
 import { getDb } from '../../lib/db';
 
 type Phase = 'question' | 'answer' | 'rate';
+
+// Detect if a string looks like code
+function isCode(text: string): boolean {
+  return /[{};=()<>]/.test(text) && (
+    text.includes('=>') ||
+    text.includes('function') ||
+    text.includes('const ') ||
+    text.includes('return ') ||
+    text.includes('import ') ||
+    text.includes('class ') ||
+    text.startsWith('<') ||
+    (text.includes('(') && text.includes(')') && text.includes('{'))
+  );
+}
 
 export default function StudyScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -22,6 +36,7 @@ export default function StudyScreen() {
   const [rating, setRating] = useState<number | null>(null);
   const [done, setDone] = useState(false);
   const [results, setResults] = useState<{ card: Card; rating: number }[]>([]);
+  const [exampleOpen, setExampleOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -30,6 +45,9 @@ export default function StudyScreen() {
     const due = all.filter((c) => c.next_review_date <= today);
     setQueue(due.length > 0 ? due : all.slice(0, Math.min(all.length, 10)));
   }, [id]);
+
+  // Reset example open state on card change
+  useEffect(() => { setExampleOpen(false); }, [index]);
 
   if (!deck || queue.length === 0) {
     return (
@@ -67,6 +85,8 @@ export default function StudyScreen() {
   }
 
   const card = queue[index];
+  const useCases: string[] = Array.isArray(card.use_cases) ? card.use_cases : [];
+  const exampleIsCode = card.simple_example ? isCode(card.simple_example) : false;
 
   function handleRate(r: number) {
     setRating(r);
@@ -107,50 +127,100 @@ export default function StudyScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.cardArea}>
+        {/* Question */}
         <View style={styles.flashcard}>
           <Text style={styles.cardLabel}>QUESTION</Text>
           <Text style={styles.cardQuestion}>{card.question}</Text>
         </View>
 
+        {/* Answer card */}
         {phase === 'answer' && (
           <View style={[styles.flashcard, styles.answerCard]}>
             <Text style={styles.cardLabel}>ANSWER</Text>
             <Text style={styles.cardAnswer}>{card.answer}</Text>
 
+            {/* Why it matters */}
             {card.why_important ? (
-              <View style={styles.context}>
-                <View style={styles.contextHeader}>
-                  <Lightbulb size={13} color={Colors.gray400} />
-                  <Text style={styles.contextLabel}>Why it matters</Text>
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Lightbulb size={13} color={Colors.primary} />
+                  <Text style={styles.sectionLabel}>WHY IT MATTERS</Text>
                 </View>
-                <Text style={styles.contextText}>{card.why_important}</Text>
+                <Text style={styles.sectionText}>{card.why_important}</Text>
               </View>
             ) : null}
 
-            {card.simple_example ? (
-              <View style={styles.context}>
-                <View style={styles.contextHeader}>
-                  <Pin size={13} color={Colors.gray400} />
-                  <Text style={styles.contextLabel}>Example</Text>
+            {/* Real-world use cases */}
+            {useCases.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Zap size={13} color={Colors.confidenceMid} />
+                  <Text style={styles.sectionLabel}>REAL-WORLD USE CASES</Text>
                 </View>
-                <Text style={styles.contextText}>{card.simple_example}</Text>
+                {useCases.map((uc, i) => (
+                  <View key={i} style={styles.useCaseRow}>
+                    <Text style={styles.useCaseDot}>›</Text>
+                    <Text style={styles.useCaseText}>{uc}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Collapsible Example */}
+            {card.simple_example ? (
+              <View style={styles.section}>
+                <TouchableOpacity
+                  style={styles.exampleToggle}
+                  onPress={() => setExampleOpen((o) => !o)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.sectionHeader}>
+                    {exampleIsCode
+                      ? <Code size={13} color={Colors.confidenceMax} />
+                      : <ChevronDown size={13} color={Colors.gray400} />
+                    }
+                    <Text style={styles.sectionLabel}>
+                      {exampleIsCode ? 'CODE EXAMPLE' : 'EXAMPLE'}
+                    </Text>
+                  </View>
+                  {exampleOpen
+                    ? <ChevronUp size={16} color={Colors.gray400} />
+                    : <ChevronDown size={16} color={Colors.gray400} />
+                  }
+                </TouchableOpacity>
+
+                {exampleOpen && (
+                  exampleIsCode ? (
+                    <View style={styles.codeBlock}>
+                      <Text style={styles.codeText}>{card.simple_example}</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.sectionText}>{card.simple_example}</Text>
+                  )
+                )}
               </View>
             ) : null}
           </View>
         )}
 
+        {/* Flip button */}
         {phase === 'question' && (
           <TouchableOpacity style={styles.flipBtn} onPress={() => setPhase('answer')}>
             <Text style={styles.flipBtnText}>Show Answer</Text>
           </TouchableOpacity>
         )}
 
+        {/* Rating */}
         {phase === 'answer' && !rating && (
           <View style={styles.ratingSection}>
             <Text style={styles.ratingLabel}>How well did you know it?</Text>
             <View style={styles.ratingGrid}>
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((r) => (
-                <TouchableOpacity key={r} style={[styles.ratingBtn, { backgroundColor: ratingColor(r) }]} onPress={() => handleRate(r)}>
+                <TouchableOpacity
+                  key={r}
+                  style={[styles.ratingBtn, { backgroundColor: ratingColor(r) }]}
+                  onPress={() => handleRate(r)}
+                >
                   <Text style={styles.ratingBtnText}>{r}</Text>
                 </TouchableOpacity>
               ))}
@@ -190,17 +260,38 @@ const styles = StyleSheet.create({
   progressFill: { height: 4, backgroundColor: Colors.primary, borderRadius: 4 },
   cardArea: { padding: 20, gap: 16, paddingBottom: 40 },
   flashcard: {
-    backgroundColor: Colors.white, borderRadius: 20, padding: 24, gap: 12,
+    backgroundColor: Colors.white, borderRadius: 20, padding: 24, gap: 14,
     shadowColor: '#000', shadowOpacity: 0.06, shadowOffset: { width: 0, height: 4 }, shadowRadius: 16, elevation: 4,
   },
   answerCard: { borderLeftWidth: 4, borderLeftColor: Colors.primary },
   cardLabel: { fontSize: 11, fontWeight: '800', color: Colors.gray400, letterSpacing: 1.5 },
   cardQuestion: { fontSize: 22, fontWeight: '700', color: Colors.black, lineHeight: 30 },
   cardAnswer: { fontSize: 18, color: Colors.gray800, lineHeight: 26 },
-  context: { gap: 6, paddingTop: 8, borderTopWidth: 1, borderTopColor: Colors.gray100 },
-  contextHeader: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  contextLabel: { fontSize: 11, fontWeight: '700', color: Colors.gray400, letterSpacing: 0.5 },
-  contextText: { fontSize: 14, color: Colors.gray600, lineHeight: 20 },
+  // Sections
+  section: { gap: 8, paddingTop: 12, borderTopWidth: 1, borderTopColor: Colors.gray100 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  sectionLabel: { fontSize: 10, fontWeight: '800', color: Colors.gray400, letterSpacing: 1.2 },
+  sectionText: { fontSize: 14, color: Colors.gray600, lineHeight: 20 },
+  // Use cases
+  useCaseRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
+  useCaseDot: { fontSize: 16, color: Colors.confidenceMid, lineHeight: 20, fontWeight: '700' },
+  useCaseText: { flex: 1, fontSize: 14, color: Colors.gray600, lineHeight: 20 },
+  // Example toggle
+  exampleToggle: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  // Code block
+  codeBlock: {
+    backgroundColor: Colors.gray900,
+    borderRadius: 10,
+    padding: 14,
+    marginTop: 4,
+  },
+  codeText: {
+    fontFamily: 'monospace',
+    fontSize: 13,
+    color: '#A8FF78',
+    lineHeight: 20,
+  },
+  // Buttons
   flipBtn: { backgroundColor: Colors.primary, padding: 18, borderRadius: 16, alignItems: 'center' },
   flipBtnText: { color: Colors.white, fontSize: 18, fontWeight: '800' },
   ratingSection: { gap: 12 },
@@ -208,6 +299,7 @@ const styles = StyleSheet.create({
   ratingGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
   ratingBtn: { width: 52, height: 52, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   ratingBtnText: { color: Colors.white, fontSize: 18, fontWeight: '800' },
+  // Summary
   summary: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 12 },
   summaryTitle: { fontSize: 28, fontWeight: '900', color: Colors.black },
   summaryDeck: { fontSize: 16, color: Colors.gray500 },
