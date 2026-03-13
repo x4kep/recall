@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { View, Text, TextInput, Modal, TouchableOpacity, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme, ThemeColors } from '../../context/ThemeContext';
+import AnimatedSheet from '../ui/AnimatedSheet';
 
 const DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
 type Difficulty = typeof DIFFICULTIES[number];
@@ -55,8 +56,8 @@ export default function AddCardModal({ visible, onClose, onSubmit }: Props) {
   const canSubmit = question.trim().length > 0 && answer.trim().length > 0;
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.overlay}>
+    <AnimatedSheet visible={visible} onClose={handleClose}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.sheet}>
           <Text style={styles.title}>{t('deck.new_card')}</Text>
 
@@ -118,13 +119,12 @@ export default function AddCardModal({ visible, onClose, onSubmit }: Props) {
           </View>
         </View>
       </KeyboardAvoidingView>
-    </Modal>
+    </AnimatedSheet>
   );
 }
 
 function makeStyles(C: ThemeColors) {
   return StyleSheet.create({
-    overlay: { flex: 1, backgroundColor: C.overlay, justifyContent: 'flex-end' },
     sheet: { backgroundColor: C.surfaceElevated, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 12 },
     title: { fontSize: 22, fontWeight: '800', color: C.text },
     input: { borderWidth: 1.5, borderColor: C.inputBorder, borderRadius: 12, padding: 14, fontSize: 15, color: C.text, backgroundColor: C.inputBg },

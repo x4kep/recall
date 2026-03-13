@@ -1,6 +1,7 @@
-import { View, Text, Modal, TouchableOpacity, ScrollView, Share, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Share, StyleSheet } from 'react-native';
 import { X, Share2 } from 'lucide-react-native';
 import { useTheme, ThemeColors } from '../../context/ThemeContext';
+import AnimatedSheet from '../ui/AnimatedSheet';
 
 const JSON_TEMPLATE = `{
   "name": "Deck Name",
@@ -37,8 +38,7 @@ export default function JsonFormatModal({ visible, onClose }: Props) {
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.overlay}>
+    <AnimatedSheet visible={visible} onClose={onClose}>
         <View style={styles.sheet}>
           <View style={styles.header}>
             <Text style={styles.title}>JSON Format</Text>
@@ -70,14 +70,12 @@ export default function JsonFormatModal({ visible, onClose }: Props) {
             <Text style={styles.shareBtnText}>Share Template</Text>
           </TouchableOpacity>
         </View>
-      </View>
-    </Modal>
+    </AnimatedSheet>
   );
 }
 
 function makeStyles(C: ThemeColors) {
   return StyleSheet.create({
-    overlay: { flex: 1, backgroundColor: C.overlay, justifyContent: 'flex-end' },
     sheet: { backgroundColor: C.surfaceElevated, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 14, maxHeight: '88%' },
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     title: { fontSize: 22, fontWeight: '800', color: C.text },
