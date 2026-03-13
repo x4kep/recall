@@ -1,3 +1,4 @@
+import { Text } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Colors } from '../../constants/colors';
 
@@ -28,5 +29,5 @@ export default function TabLayout() {
 }
 
 function TabIcon({ label }: { label: string; color: string }) {
-  return <>{label}</>;
+  return <Text style={{ fontSize: 20 }}>{label}</Text>;
 }
