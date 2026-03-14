@@ -12,6 +12,7 @@ import DeckInfo from '../../components/deck/DeckInfo';
 import CardItem from '../../components/deck/CardItem';
 import AddCardModal from '../../components/deck/AddCardModal';
 import DeleteDeckModal from '../../components/deck/DeleteDeckModal';
+import SessionSetupModal, { SessionLimit } from '../../components/study/SessionSetupModal';
 
 export default function DeckScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -26,6 +27,7 @@ export default function DeckScreen() {
   const [cards, setCards] = useState<Card[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSessionSetup, setShowSessionSetup] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: ToastType; visible: boolean }>({
     message: '', type: 'success', visible: false,
   });
@@ -96,7 +98,7 @@ export default function DeckScreen() {
       <DeckInfo
         deck={deck}
         hasCards={cards.length > 0}
-        onStudy={() => router.push({ pathname: '/study/[id]', params: { id: deck.id } })}
+        onStudy={() => setShowSessionSetup(true)}
       />
 
       <FlatList
@@ -131,6 +133,17 @@ export default function DeckScreen() {
         cardCount={deck.card_count}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDeleteDeck}
+      />
+
+      <SessionSetupModal
+        visible={showSessionSetup}
+        deckName={deck.name}
+        cardCount={cards.length}
+        onClose={() => setShowSessionSetup(false)}
+        onStart={(limit: SessionLimit) => {
+          setShowSessionSetup(false);
+          router.push({ pathname: '/study/[id]', params: { id: deck.id, limit: String(limit) } });
+        }}
       />
 
       <Toast

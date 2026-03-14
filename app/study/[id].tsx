@@ -16,7 +16,8 @@ import AllCaughtUp from '../../components/study/AllCaughtUp';
 type Phase = 'question' | 'answer';
 
 export default function StudyScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, limit } = useLocalSearchParams<{ id: string; limit?: string }>();
+  const sessionLimit = limit ? parseInt(limit, 10) : 0;
   const router = useRouter();
   const C = useTheme();
   const styles = makeStyles(C);
@@ -34,9 +35,23 @@ export default function StudyScreen() {
     if (!id) return;
     const today = new Date().toISOString().split('T')[0];
     const all = getCards(id);
+
+    // Priority sort: low confidence first, then low ease factor, then most overdue
+    function priorityScore(c: Card): number {
+      const confidencePriority = c.confidence === 0 ? 0 : c.confidence; // 0 = never rated, treat as urgent
+      return confidencePriority * 1000 + c.sm2_ease_factor * 100 + (c.next_review_date <= today ? 0 : 1000000);
+    }
+
     const due = all.filter((c) => c.next_review_date <= today);
-    setQueue(due.length > 0 ? due : all.slice(0, Math.min(all.length, 10)));
-  }, [id]);
+    const notDue = all.filter((c) => c.next_review_date > today);
+    const sorted = [
+      ...due.sort((a, b) => priorityScore(a) - priorityScore(b)),
+      ...notDue.sort((a, b) => priorityScore(a) - priorityScore(b)),
+    ];
+
+    const count = sessionLimit > 0 ? sessionLimit : sorted.length;
+    setQueue(sorted.slice(0, count));
+  }, [id, sessionLimit]);
 
   if (!deck || queue.length === 0) {
     return (
