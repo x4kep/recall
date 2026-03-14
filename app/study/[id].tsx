@@ -79,6 +79,29 @@ export default function StudyScreen() {
 
     setTimeout(() => {
       if (index + 1 >= queue.length) {
+        const today = new Date().toISOString().split('T')[0];
+        const allResults = [...results, { card, rating: r }];
+        const avgRating = allResults.reduce((s, rv) => s + rv.rating, 0) / allResults.length;
+        const existing = db.getFirstSync(
+          'SELECT id, cards_reviewed, avg_rating FROM study_log WHERE date=?',
+          [today]
+        ) as { id: string; cards_reviewed: number; avg_rating: number } | null;
+        if (existing) {
+          const newCount = existing.cards_reviewed + allResults.length;
+          const newAvg =
+            (existing.avg_rating * existing.cards_reviewed + avgRating * allResults.length) /
+            newCount;
+          db.runSync('UPDATE study_log SET cards_reviewed=?, avg_rating=? WHERE date=?', [
+            newCount,
+            newAvg,
+            today,
+          ]);
+        } else {
+          db.runSync(
+            'INSERT INTO study_log (id, date, cards_reviewed, avg_rating) VALUES (?, ?, ?, ?)',
+            [Math.random().toString(36).slice(2), today, allResults.length, avgRating]
+          );
+        }
         setDone(true);
       } else {
         setIndex((i) => i + 1);

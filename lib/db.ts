@@ -51,5 +51,13 @@ export async function initDb(): Promise<void> {
 
     CREATE INDEX IF NOT EXISTS idx_cards_deck_id ON cards(deck_id);
     CREATE INDEX IF NOT EXISTS idx_cards_next_review ON cards(next_review_date);
+
+    CREATE TABLE IF NOT EXISTS study_log (
+      id TEXT PRIMARY KEY,
+      date TEXT NOT NULL,
+      cards_reviewed INTEGER NOT NULL,
+      avg_rating REAL NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_study_log_date ON study_log(date);
   `);
 }

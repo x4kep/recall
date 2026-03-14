@@ -72,8 +72,16 @@
     "avg_confidence": "Avg confidence",
     "done": "Done"
   },
+  "history": {
+    "title": "History",
+    "no_activity": "No study activity on this day.",
+    "cards_reviewed": "Cards reviewed",
+    "avg_rating": "Avg rating",
+    "select_day": "Tap a day to see details."
+  },
   "tabs": {
     "home": "Home",
+    "history": "History",
     "decks": "Decks"
   },
   "settings": {
