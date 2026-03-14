@@ -1,4 +1,11 @@
+import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { X } from 'lucide-react-native';
 import { useTheme, ThemeColors } from '../../context/ThemeContext';
 
@@ -11,7 +18,21 @@ interface Props {
 export default function StudyHeader({ current, total, onClose }: Props) {
   const C = useTheme();
   const styles = makeStyles(C);
-  const progress = total > 0 ? (current / total) * 100 : 0;
+  const [barWidth, setBarWidth] = useState(0);
+  const animWidth = useSharedValue(0);
+
+  useEffect(() => {
+    if (barWidth === 0) return;
+    const target = total > 0 ? (current / total) * barWidth : 0;
+    animWidth.value = withTiming(target, {
+      duration: 400,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [current, total, barWidth]);
+
+  const fillStyle = useAnimatedStyle(() => ({
+    width: animWidth.value,
+  }));
 
   return (
     <View style={styles.header}>
@@ -19,8 +40,8 @@ export default function StudyHeader({ current, total, onClose }: Props) {
         <X size={22} color={C.textSecondary} />
       </TouchableOpacity>
       <Text style={styles.counter}>{current + 1} / {total}</Text>
-      <View style={styles.bar}>
-        <View style={[styles.fill, { width: `${progress}%` as any }]} />
+      <View style={styles.bar} onLayout={(e) => setBarWidth(e.nativeEvent.layout.width)}>
+        <Animated.View style={[styles.fill, fillStyle]} />
       </View>
     </View>
   );

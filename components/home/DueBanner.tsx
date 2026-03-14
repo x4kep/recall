@@ -1,4 +1,10 @@
+import { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
 import { ArrowRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme, ThemeColors } from '../../context/ThemeContext';
@@ -13,17 +19,32 @@ export default function DueBanner({ dueCount, onPress }: Props) {
   const C = useTheme();
   const styles = makeStyles(C);
 
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(16);
+
+  useEffect(() => {
+    opacity.value = withTiming(1, { duration: 400 });
+    translateY.value = withTiming(0, { duration: 350 });
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
   return (
-    <TouchableOpacity style={styles.banner} activeOpacity={0.8} onPress={onPress}>
-      <View>
-        <Text style={styles.count}>{dueCount}</Text>
-        <Text style={styles.label}>{t('home.cards_due')}</Text>
-      </View>
-      <View style={styles.btn}>
-        <Text style={styles.btnText}>{t('home.study_all')}</Text>
-        <ArrowRight size={16} color={C.white} />
-      </View>
-    </TouchableOpacity>
+    <Animated.View style={animStyle}>
+      <TouchableOpacity style={styles.banner} activeOpacity={0.8} onPress={onPress}>
+        <View>
+          <Text style={styles.count}>{dueCount}</Text>
+          <Text style={styles.label}>{t('home.cards_due')}</Text>
+        </View>
+        <View style={styles.btn}>
+          <Text style={styles.btnText}>{t('home.study_all')}</Text>
+          <ArrowRight size={16} color={C.white} />
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 

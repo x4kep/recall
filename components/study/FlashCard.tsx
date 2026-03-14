@@ -1,6 +1,16 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  Easing,
+} from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { useTheme, ThemeColors } from '../../context/ThemeContext';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface Props {
   question: string;
@@ -12,16 +22,41 @@ export default function FlashCard({ question, onShowAnswer }: Props) {
   const C = useTheme();
   const styles = makeStyles(C);
 
+  const cardOpacity = useSharedValue(0);
+  const cardTranslateX = useSharedValue(-SCREEN_WIDTH * 0.25);
+  const btnOpacity = useSharedValue(0);
+  const btnTranslateY = useSharedValue(32);
+
+  useEffect(() => {
+    const ease = Easing.out(Easing.cubic);
+    cardOpacity.value = withTiming(1, { duration: 320, easing: ease });
+    cardTranslateX.value = withTiming(0, { duration: 320, easing: ease });
+    btnOpacity.value = withDelay(80, withTiming(1, { duration: 280, easing: ease }));
+    btnTranslateY.value = withDelay(80, withTiming(0, { duration: 280, easing: ease }));
+  }, []);
+
+  const cardStyle = useAnimatedStyle(() => ({
+    opacity: cardOpacity.value,
+    transform: [{ translateX: cardTranslateX.value }],
+  }));
+
+  const btnStyle = useAnimatedStyle(() => ({
+    opacity: btnOpacity.value,
+    transform: [{ translateY: btnTranslateY.value }],
+  }));
+
   return (
     <>
-      <View style={styles.card}>
+      <Animated.View style={[styles.card, cardStyle]}>
         <Text style={styles.label}>{t('study.question_label')}</Text>
         <Text style={styles.question}>{question}</Text>
-      </View>
+      </Animated.View>
 
-      <TouchableOpacity style={styles.flipBtn} onPress={onShowAnswer}>
-        <Text style={styles.flipBtnText}>{t('study.show_answer')}</Text>
-      </TouchableOpacity>
+      <Animated.View style={btnStyle}>
+        <TouchableOpacity style={styles.flipBtn} onPress={onShowAnswer}>
+          <Text style={styles.flipBtnText}>{t('study.show_answer')}</Text>
+        </TouchableOpacity>
+      </Animated.View>
     </>
   );
 }

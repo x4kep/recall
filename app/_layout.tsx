@@ -3,16 +3,18 @@ import { useEffect, useState } from 'react';
 import { View, Image, StyleSheet, useColorScheme } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { initDb } from '../lib/db';
+import { initDb, getDb } from '../lib/db';
 import { seedIfEmpty } from '../lib/seed';
 import { useDeckStore } from '../store/deckStore';
 import { ThemeProvider, lightColors, darkColors } from '../context/ThemeContext';
+import { useDrizzleStudio } from 'expo-drizzle-studio-plugin';
 
 export default function RootLayout() {
   const loadDecks = useDeckStore((s) => s.loadDecks);
   const [ready, setReady] = useState(false);
   const scheme = useColorScheme();
   const C = scheme === 'dark' ? darkColors : lightColors;
+  useDrizzleStudio(getDb());
 
   useEffect(() => {
     initDb()

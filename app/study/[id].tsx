@@ -21,7 +21,7 @@ export default function StudyScreen() {
   const router = useRouter();
   const C = useTheme();
   const styles = makeStyles(C);
-  const { decks, getCards } = useDeckStore();
+  const { decks, getCards, refreshDeckStats } = useDeckStore();
   const deck = decks.find((d) => d.id === id);
 
   const [queue, setQueue] = useState<Card[]>([]);
@@ -117,6 +117,7 @@ export default function StudyScreen() {
             [Math.random().toString(36).slice(2), today, allResults.length, avgRating]
           );
         }
+        refreshDeckStats(id);
         setDone(true);
       } else {
         setIndex((i) => i + 1);
@@ -136,6 +137,7 @@ export default function StudyScreen() {
 
       <ScrollView contentContainerStyle={styles.cardArea}>
         <FlashCard
+          key={card.id}
           question={card.question}
           onShowAnswer={() => setPhase('answer')}
         />

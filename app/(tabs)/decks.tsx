@@ -12,7 +12,7 @@ import EmptyDecks from '../../components/decks/EmptyDecks';
 import CreateDeckModal from '../../components/decks/CreateDeckModal';
 import ImportPreviewModal from '../../components/decks/ImportPreviewModal';
 import SideDrawer from '../../components/ui/SideDrawer';
-import DrawerContent from '../../components/ui/DrawerContent';
+import DrawerContent from '../../components/settings/SettingsContent';
 
 export default function DecksScreen() {
   const { decks, createDeck, deleteDeck, importDeck } = useDeckStore();

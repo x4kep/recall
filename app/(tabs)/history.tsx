@@ -9,7 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, ChevronRight, Menu } from 'lucide-react-native';
 import SideDrawer from '../../components/ui/SideDrawer';
-import DrawerContent from '../../components/ui/DrawerContent';
+import DrawerContent from '../../components/settings/SettingsContent';
 import { useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme, ThemeColors } from '../../context/ThemeContext';

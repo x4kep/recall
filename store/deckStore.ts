@@ -45,6 +45,7 @@ interface DeckStore {
   toggleFavorite: (id: string) => void;
   getDueCount: () => number;
   importDeck: (data: ImportedDeck) => Deck;
+  refreshDeckStats: (deckId: string) => void;
 }
 
 function uuid(): string {
@@ -202,6 +203,19 @@ export const useDeckStore = create<DeckStore>((set, get) => ({
     }
     set((s) => ({ decks: [deck, ...s.decks] }));
     return deck;
+  },
+
+  refreshDeckStats: (deckId) => {
+    const db = getDb();
+    const row = db.getFirstSync(
+      'SELECT COUNT(*) as count, AVG(CASE WHEN confidence > 0 THEN confidence END) as avg FROM cards WHERE deck_id = ?',
+      [deckId]
+    ) as { count: number; avg: number | null } | null;
+    const avg = row?.avg ?? 0;
+    db.runSync('UPDATE decks SET avg_confidence = ?, updated_at = ? WHERE id = ?', [avg, now(), deckId]);
+    set((s) => ({
+      decks: s.decks.map((d) => d.id === deckId ? { ...d, avg_confidence: avg } : d),
+    }));
   },
 
   getDueCount: () => {
