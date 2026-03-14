@@ -11,6 +11,8 @@ import DeckListItem from '../../components/decks/DeckListItem';
 import EmptyDecks from '../../components/decks/EmptyDecks';
 import CreateDeckModal from '../../components/decks/CreateDeckModal';
 import ImportPreviewModal from '../../components/decks/ImportPreviewModal';
+import SideDrawer from '../../components/ui/SideDrawer';
+import DrawerContent from '../../components/ui/DrawerContent';
 
 export default function DecksScreen() {
   const { decks, createDeck, deleteDeck, importDeck } = useDeckStore();
@@ -22,6 +24,7 @@ export default function DecksScreen() {
   const [showCreate, setShowCreate] = useState(false);
   const [importPreview, setImportPreview] = useState<ImportedDeck | null>(null);
   const [importing, setImporting] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   function handleDelete(deck: Deck) {
     Alert.alert(
@@ -58,6 +61,7 @@ export default function DecksScreen() {
         importing={importing}
         onImport={handleImport}
         onNew={() => setShowCreate(true)}
+        onMenuPress={() => setDrawerOpen(true)}
       />
 
       <FlatList
@@ -90,6 +94,10 @@ export default function DecksScreen() {
         onClose={() => setImportPreview(null)}
         onConfirm={confirmImport}
       />
+
+      <SideDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)}>
+        <DrawerContent onClose={() => setDrawerOpen(false)} />
+      </SideDrawer>
     </SafeAreaView>
   );
 }

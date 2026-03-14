@@ -7,7 +7,9 @@ import {
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Menu } from 'lucide-react-native';
+import SideDrawer from '../../components/ui/SideDrawer';
+import DrawerContent from '../../components/ui/DrawerContent';
 import { useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme, ThemeColors } from '../../context/ThemeContext';
@@ -153,6 +155,7 @@ export default function HistoryScreen() {
   const [month, setMonth] = useState(todayDate.getMonth());
   const [logMap, setLogMap] = useState<LogMap>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   function loadData(y: number, m: number) {
     const db = getDb();
@@ -228,7 +231,12 @@ export default function HistoryScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
         {/* Header */}
-        <Text style={styles.title}>{t('history.title')}</Text>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => setDrawerOpen(true)} style={styles.menuBtn}>
+            <Menu size={24} color={C.text} />
+          </TouchableOpacity>
+          <Text style={styles.title}>{t('history.title')}</Text>
+        </View>
 
         {/* Calendar card */}
         <View style={styles.calendarCard}>
@@ -333,6 +341,10 @@ export default function HistoryScreen() {
         )}
 
       </ScrollView>
+
+      <SideDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)}>
+        <DrawerContent onClose={() => setDrawerOpen(false)} />
+      </SideDrawer>
     </SafeAreaView>
   );
 }
@@ -351,11 +363,17 @@ function makeStyles(C: ThemeColors) {
     },
 
     // Header
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      marginBottom: 20,
+    },
+    menuBtn: { padding: 4 },
     title: {
       fontSize: 28,
       fontWeight: '700',
       color: C.text,
-      marginBottom: 20,
     },
 
     // Calendar card
