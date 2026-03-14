@@ -630,7 +630,7 @@
       "question": "What is TypeScript and how does it work with Node.js?",
       "answer": "TypeScript is a statically typed superset of JavaScript that compiles to plain JS. With ts-node or tsc, you can write typed Node.js code that catches type errors at build time rather than runtime.",
       "why_important": "TypeScript adoption in Node.js projects is now the industry standard.",
-      "simple_example": "function greet(name: string): string {\n  return `Hello, ${name}`;\n}\n// Compiled to JS before running",
+      "simple_example": "function greet(name: string): string {\n  return 'Hello, ${name}';\n}\n// Compiled to JS before running",
       "use_cases": [
         "Catching type errors during development",
         "Self-documenting function signatures",
@@ -906,7 +906,7 @@
       "question": "What is server-sent events (SSE) and how do you implement them in Node.js?",
       "answer": "SSE is a one-way protocol where the server pushes updates to the browser over a persistent HTTP connection. The server sends text/event-stream content-type and writes event data, which the browser's EventSource API receives.",
       "why_important": "SSE is simpler than WebSocket for unidirectional real-time updates.",
-      "simple_example": "res.setHeader('Content-Type', 'text/event-stream');\nsetInterval(() => res.write(`data: ${Date.now()}\\n\\n`), 1000);",
+      "simple_example": "res.setHeader('Content-Type', 'text/event-stream');\nsetInterval(() => res.write('data: ${Date.now()}\\n\\n'), 1000);",
       "use_cases": [
         "Live progress bars for long operations",
         "Real-time log streaming to a browser",
@@ -942,7 +942,7 @@
       "question": "What is SQL injection and how do you prevent it in Node.js?",
       "answer": "SQL injection is an attack where malicious SQL code is inserted into query strings to manipulate the database. Prevent it by always using parameterized queries or prepared statements and never concatenating user input into SQL strings.",
       "why_important": "SQL injection is OWASP's top web application security risk.",
-      "simple_example": "// Vulnerable: `SELECT * FROM users WHERE id = ${req.params.id}`\n// Safe:\nawait pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);",
+      "simple_example": "// Vulnerable: 'SELECT * FROM users WHERE id = ${req.params.id}'\n// Safe:\nawait pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);",
       "use_cases": [
         "Safe user search queries",
         "Secure login authentication queries",
@@ -954,7 +954,7 @@
       "question": "What is XSS and how do you prevent it in Node.js?",
       "answer": "XSS (Cross-Site Scripting) attacks inject malicious scripts into web pages served to users. Prevent it in Node.js by escaping HTML output, setting a Content-Security-Policy header (via helmet), and never trusting user input rendered as HTML.",
       "why_important": "XSS is a top web security vulnerability that affects user sessions and data.",
-      "simple_example": "// Dangerous:\nres.send(`<h1>${req.query.name}</h1>`);\n// Safe: use a template engine that escapes by default",
+      "simple_example": "// Dangerous:\nres.send('<h1>${req.query.name}</h1>');\n// Safe: use a template engine that escapes by default",
       "use_cases": [
         "Safe rendering of user-generated content",
         "Protecting admin dashboards from hijacking",
