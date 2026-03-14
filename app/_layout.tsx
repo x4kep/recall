@@ -37,7 +37,9 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="settings" options={{ headerShown: false }} />
+      </Stack>
     </ThemeProvider>
   );
 }

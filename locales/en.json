@@ -82,6 +82,11 @@
     "theme_light": "Light",
     "theme_dark": "Dark",
     "theme_system": "System",
+    "notifications": "NOTIFICATIONS",
+    "daily_reminder": "Daily Study Reminder",
+    "reminder_time": "Remind me at",
+    "notif_denied_title": "Permission Denied",
+    "notif_denied_msg": "Enable notifications in your device Settings to use reminders.",
     "about": "ABOUT"
   }
 }
