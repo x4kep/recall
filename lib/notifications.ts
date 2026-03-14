@@ -1,6 +1,13 @@
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+
+// expo-notifications was removed from Expo Go in SDK 53
+function isExpoGo() {
+  return Constants.appOwnership === 'expo';
+}
 
 export async function requestNotificationPermission(): Promise<boolean> {
+  if (isExpoGo()) return false;
   try {
     const Notifications = await import('expo-notifications');
     if (Platform.OS === 'android') {
@@ -17,6 +24,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export async function scheduleStudyReminder(hour: number, minute: number): Promise<void> {
+  if (isExpoGo()) return;
   try {
     const Notifications = await import('expo-notifications');
     Notifications.setNotificationHandler({
@@ -39,15 +47,16 @@ export async function scheduleStudyReminder(hour: number, minute: number): Promi
       },
     });
   } catch {
-    // expo-notifications not available in Expo Go
+    // silently fail
   }
 }
 
 export async function cancelStudyReminder(): Promise<void> {
+  if (isExpoGo()) return;
   try {
     const Notifications = await import('expo-notifications');
     await Notifications.cancelAllScheduledNotificationsAsync();
   } catch {
-    // expo-notifications not available in Expo Go
+    // silently fail
   }
 }
