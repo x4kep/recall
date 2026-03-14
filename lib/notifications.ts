@@ -1,41 +1,53 @@
-// lib/notifications.ts
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
-
 export async function requestNotificationPermission(): Promise<boolean> {
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('reminders', {
-      name: 'Study Reminders',
-      importance: Notifications.AndroidImportance.HIGH,
-    });
+  try {
+    const Notifications = await import('expo-notifications');
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('reminders', {
+        name: 'Study Reminders',
+        importance: Notifications.AndroidImportance.HIGH,
+      });
+    }
+    const { status } = await Notifications.requestPermissionsAsync();
+    return status === 'granted';
+  } catch {
+    return false;
   }
-  const { status } = await Notifications.requestPermissionsAsync();
-  return status === 'granted';
 }
 
 export async function scheduleStudyReminder(hour: number, minute: number): Promise<void> {
-  await cancelStudyReminder();
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: 'Time to study! 📚',
-      body: 'Open Recall and review your cards for today.',
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DAILY,
-      hour,
-      minute,
-    },
-  });
+  try {
+    const Notifications = await import('expo-notifications');
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
+    await cancelStudyReminder();
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Time to study!',
+        body: 'Open Recall and review your cards for today.',
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour,
+        minute,
+      },
+    });
+  } catch {
+    // expo-notifications not available in Expo Go
+  }
 }
 
 export async function cancelStudyReminder(): Promise<void> {
-  await Notifications.cancelAllScheduledNotificationsAsync();
+  try {
+    const Notifications = await import('expo-notifications');
+    await Notifications.cancelAllScheduledNotificationsAsync();
+  } catch {
+    // expo-notifications not available in Expo Go
+  }
 }
