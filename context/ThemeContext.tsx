@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { useColorScheme } from 'react-native';
 
 export interface ThemeColors {
@@ -30,6 +30,13 @@ export interface ThemeColors {
   tabBarBorder: string;
   overlay: string;
   codeBlockBg: string;
+}
+
+export type ThemeMode = 'light' | 'dark' | 'system';
+
+interface ThemeSettings {
+  themeMode: ThemeMode;
+  setThemeMode: (mode: ThemeMode) => void;
 }
 
 const brand = {
@@ -84,13 +91,31 @@ export const darkColors: ThemeColors = {
 };
 
 const ThemeContext = createContext<ThemeColors>(lightColors);
+const ThemeSettingsContext = createContext<ThemeSettings>({
+  themeMode: 'system',
+  setThemeMode: () => {},
+});
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const scheme = useColorScheme();
-  const colors = scheme === 'dark' ? darkColors : lightColors;
-  return <ThemeContext.Provider value={colors}>{children}</ThemeContext.Provider>;
+  const system = useColorScheme();
+  const [themeMode, setThemeMode] = useState<ThemeMode>('system');
+
+  const resolved = themeMode === 'system' ? system : themeMode;
+  const colors = resolved === 'dark' ? darkColors : lightColors;
+
+  return (
+    <ThemeSettingsContext.Provider value={{ themeMode, setThemeMode }}>
+      <ThemeContext.Provider value={colors}>
+        {children}
+      </ThemeContext.Provider>
+    </ThemeSettingsContext.Provider>
+  );
 }
 
 export function useTheme(): ThemeColors {
   return useContext(ThemeContext);
+}
+
+export function useThemeSettings(): ThemeSettings {
+  return useContext(ThemeSettingsContext);
 }

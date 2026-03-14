@@ -75,5 +75,13 @@
   "tabs": {
     "home": "Home",
     "decks": "Decks"
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "APPEARANCE",
+    "theme_light": "Light",
+    "theme_dark": "Dark",
+    "theme_system": "System",
+    "about": "ABOUT"
   }
 }

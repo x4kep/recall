@@ -9,7 +9,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTheme } from '../../context/ThemeContext';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const DRAWER_WIDTH = Math.min(SCREEN_WIDTH * 0.78, 320);
 
 interface Props {
   visible: boolean;
@@ -17,37 +18,31 @@ interface Props {
   children: React.ReactNode;
 }
 
-export default function AnimatedSheet({ visible, onClose, children }: Props) {
+export default function SideDrawer({ visible, onClose, children }: Props) {
   const C = useTheme();
-  const translateY = useSharedValue(SCREEN_HEIGHT);
+  const translateX = useSharedValue(-DRAWER_WIDTH);
   const opacity = useSharedValue(0);
   const [mounted, setMounted] = useState(visible);
 
   useEffect(() => {
-    if (visible) {
-      setMounted(true);
-    }
+    if (visible) setMounted(true);
   }, [visible]);
 
   useEffect(() => {
     if (!mounted) return;
     if (visible) {
       opacity.value = withTiming(1, { duration: 200 });
-      translateY.value = withSpring(0, {
-        damping: 38,
-        stiffness: 280,
-        mass: 0.9,
-      });
+      translateX.value = withSpring(0, { damping: 38, stiffness: 280, mass: 0.9 });
     } else {
       opacity.value = withTiming(0, { duration: 180 });
-      translateY.value = withTiming(SCREEN_HEIGHT, { duration: 220 }, (finished) => {
+      translateX.value = withTiming(-DRAWER_WIDTH, { duration: 220 }, (finished) => {
         if (finished) runOnJS(setMounted)(false);
       });
     }
   }, [visible, mounted]);
 
-  const sheetStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
+  const drawerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
   }));
 
   const overlayStyle = useAnimatedStyle(() => ({
@@ -58,10 +53,10 @@ export default function AnimatedSheet({ visible, onClose, children }: Props) {
 
   return (
     <Modal visible transparent animationType="none" onRequestClose={onClose}>
-      <Animated.View style={[StyleSheet.absoluteFill, styles.overlay, { backgroundColor: C.overlay }, overlayStyle]}>
+      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: C.overlay }, overlayStyle]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
       </Animated.View>
-      <Animated.View style={[styles.sheetWrapper, sheetStyle]}>
+      <Animated.View style={[styles.drawer, { backgroundColor: C.surfaceElevated, width: DRAWER_WIDTH }, drawerStyle]}>
         {children}
       </Animated.View>
     </Modal>
@@ -69,6 +64,15 @@ export default function AnimatedSheet({ visible, onClose, children }: Props) {
 }
 
 const styles = StyleSheet.create({
-  overlay: { justifyContent: 'flex-end' },
-  sheetWrapper: { position: 'absolute', bottom: 0, left: 0, right: 0 },
+  drawer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 4, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 16,
+  },
 });
