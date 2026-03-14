@@ -4,7 +4,6 @@ import { View, Image, StyleSheet, useColorScheme } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { initDb } from '../lib/db';
-import { seedIfEmpty } from '../lib/seed';
 import { useDeckStore } from '../store/deckStore';
 import { ThemeProvider, lightColors, darkColors } from '../context/ThemeContext';
 
@@ -16,7 +15,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     initDb()
-      .then(() => { seedIfEmpty(); loadDecks(); })
+      .then(() => loadDecks())
       .finally(() => setReady(true));
   }, []);
 
